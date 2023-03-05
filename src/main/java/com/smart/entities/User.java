@@ -33,7 +33,6 @@ public class User
 	private String email;
 	
 	@NotBlank(message="Password field is required!!")
-	@jakarta.validation.constraints.Size(min=2, max=20, message="Minimum 2 and maximum 20 charaters are allowed!!")
 	private String password;
 	
 	private String role;
@@ -43,7 +42,7 @@ public class User
 	private String about;
 	
 	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY,mappedBy = "user")
-	private List<Contact> contacts = new ArrayList<>();
+	private List<Contact> contacts = new ArrayList();
 	
 	public User() {
 		super();
