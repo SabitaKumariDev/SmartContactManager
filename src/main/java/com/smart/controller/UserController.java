@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -32,6 +33,7 @@ import com.smart.entities.User;
 import com.smart.helper.Message;
 
 import jakarta.servlet.http.HttpSession;
+import jakarta.websocket.Session;
 
 
 
@@ -162,5 +164,156 @@ public class UserController {
 		}
 		return "normal/contact_detail";
 	}
+	
+	
+	//delete contact handler
+	@GetMapping("/delete/{cid}")
+	public String deleteContact(@PathVariable("cid") Integer cId, Model model, Principal principal, HttpSession session)
+	{
+		Optional<Contact> contactOptional = this.contactRepository.findById(cId);
+		Contact contact = contactOptional.get();
+		
+		//delete old photo
+		
+		String userName= principal.getName();
+		User user= this.userRepository.getUserByUserName(userName);
+		user.getContacts().remove(contact);
+		this.userRepository.save(user);
+		
+//		if(user.getId()== contact.getUser().getId())
+//		{
+//		contact.setUser(null);
+
+		
+		//this.contactRepository.delete(contact);
+		System.out.println("DELETED");
+		session.setAttribute("message", new Message("Contact deleted sucessfully...","success"));
+		//}
+		return "redirect:/user/show-contacts/0";
+	}
+	
+	
+	//user update form handler
+	@PostMapping("/update-contact/{cid}")
+	public String updateForm(@PathVariable("cid") Integer cid,Model m)
+	{
+		m.addAttribute("title","Update Contact");
+		
+		Contact contact= this.contactRepository.findById(cid).get();
+		
+		m.addAttribute("contact",contact);
+			
+	
+		return "normal/update_form";
+	}
+	
+	
+	//update contact handler
+	@RequestMapping(value="/process-update", method= RequestMethod.POST)
+	public String updateHandler(@ModelAttribute Contact contact, @RequestParam("profileImage") MultipartFile file, Model m, HttpSession session, Principal principal)
+	{
+		try
+		{
+			Contact oldContactDetail = this.contactRepository.findById(contact.getcId()).get();
+			if(!file.isEmpty())
+			{
+				//delete old photo
+				File deleteFile = new ClassPathResource("static/img").getFile();
+				File file1 = new File(deleteFile, oldContactDetail.getImage());
+				file1.delete();
+
+				
+				//update new photo
+				File saveFile = new ClassPathResource("static/img").getFile();
+				Path path= Paths.get(saveFile.getAbsolutePath() + File.separator + file.getOriginalFilename());
+				Files.copy(file.getInputStream(), path,StandardCopyOption.REPLACE_EXISTING);
+				contact.setImage(file.getOriginalFilename());
+				
+			}
+			else
+			{
+				contact.setImage(oldContactDetail.getImage());
+			}
+			User user= this.userRepository.getUserByUserName(principal.getName());
+			contact.setUser(user);
+			this.contactRepository.save(contact);
+			
+			session.setAttribute("message", new Message("Your contact is updated...","success"));
+			System.out.println("Contact Name "+contact.getName());
+			System.out.println("Contact Id "+contact.getcId());
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+
+		return "redirect:/user/"+contact.getcId()+"/contact";
+	}
+	
+	//Your profile handler
+	@GetMapping("/profile")
+	public String yourProfile(Model model)
+	{
+		model.addAttribute("title","Profile Page");
+		return "normal/profile";
+	}
+	
+	
+//	//delete user from your profile page handler 
+//	@GetMapping("/delete/{id}")
+//	public String deleteContactYourProfile(@PathVariable("id") Integer id, Model model, Principal principal, HttpSession session)
+//	{
+//		User userContact = this.userRepository.findById(id).get();
+//		
+//		this.userRepository.delete(userContact);
+//		System.out.println("DELETED");
+//		session.setAttribute("message", new Message("User has been deleted sucessfully...","success"));
+//
+//		return "normal/profile";
+//	}
+//	
+//	
+//		//update user from your profile page handler
+//		@RequestMapping(value="/process-update", method= RequestMethod.POST)
+//		public String updateHandlerYourProfile(@ModelAttribute User user, @RequestParam("profileImage") MultipartFile file, Model m, HttpSession session, Principal principal)
+//		{
+//			try
+//			{
+//				User oldContactDetail = this.userRepository.findById(user.getId()).get();
+//				if(!file.isEmpty())
+//				{
+//					//delete old photo
+//					File deleteFile = new ClassPathResource("static/img").getFile();
+//					File file1 = new File(deleteFile, oldContactDetail.getImageUrl());
+//					file1.delete();
+//
+//					
+//					//update new photo
+//					File saveFile = new ClassPathResource("static/img").getFile();
+//					Path path= Paths.get(saveFile.getAbsolutePath() + File.separator + file.getOriginalFilename());
+//					Files.copy(file.getInputStream(), path,StandardCopyOption.REPLACE_EXISTING);
+//					user.setImageUrl(file.getOriginalFilename());
+//					
+//				}
+//				else
+//				{
+//					user.setImageUrl(oldContactDetail.getImageUrl());
+//				}
+//				User user1= this.userRepository.getUserByUserName(principal.getName());
+//				this.userRepository.save(user1);
+//				
+//				session.setAttribute("message", new Message("Your contact is updated...","success"));
+//				System.out.println("Contact Name "+user.getName());
+//				System.out.println("Contact Id "+user.getId());
+//			}
+//			catch(Exception e)
+//			{
+//				e.printStackTrace();
+//			}
+//
+//			return "normal/profile";
+//		}
+
+	
 
 }

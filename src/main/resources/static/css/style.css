@@ -98,6 +98,27 @@ body{
 	height: 30px;
 	object-fit: cover;
 	border-radius:50%;
-
 	
+}
+
+.btn-operation
+{
+   display:inline-block;
+   margin-right:5px;
+}
+
+/* Search CSS */
+.search-container
+{
+	position: relative;
+}
+
+.search-result
+{
+	position: absolute;
+	background: white;
+	width: 100%;
+	padding: 10px;
+	border: 1px solid gray;
+	display: none;
 }
